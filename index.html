@@ -249,7 +249,7 @@ const fCar=()=>DATA.car.filter(r=>mc(r)&&(SEL.opc.size===0||SEL.opc.has(r.op))&&
 const fLiq=()=>DATA.liq.filter(r=>mc(r)&&(SEL.opc.size===0||SEL.opc.has(r.opc))&&(SEL.opl.size===0||SEL.opl.has(r.op)));
 function monthsRange(){const s=new Set();fCar().forEach(r=>s.add(r.y*100+r.m));fLiq().forEach(r=>s.add(r.y*100+r.m));return [...s].sort((a,b)=>a-b);}
 const MLBL=k=>MESI[(k%100)-1]+' '+String(Math.floor(k/100)).slice(2);
-function byOp(rows){const m={};rows.forEach(r=>{if(!m[r.op])m[r.op]={c:0,imp:0,gs:0,gn:0,si:0,no:0};m[r.op].c+=r.c;m[r.op].imp+=r.imp;m[r.op].gs+=(r.gs||0);m[r.op].gn+=(r.gn||0);m[r.op].si+=(r.si||0);m[r.op].no+=(r.no||0);});return m;}
+function byOp(rows){const m={};rows.forEach(r=>{if(!m[r.op])m[r.op]={c:0,imp:0,gs:0,gn:0,si:0,no:0,rr:0,ec:0,nl:0};m[r.op].c+=r.c;m[r.op].imp+=r.imp;m[r.op].gs+=(r.gs||0);m[r.op].gn+=(r.gn||0);m[r.op].si+=(r.si||0);m[r.op].no+=(r.no||0);m[r.op].rr+=(r.rr||0);m[r.op].ec+=(r.ec||0);m[r.op].nl+=(r.nl||0);});return m;}
 function kpiCard(ic,bg,col,label,val,sub){return `<div class="kpi"><div class="k-top"><div class="k-ic" style="background:${bg};color:${col}">${ic}</div><div class="k-label">${label}</div></div><div class="k-val">${val}</div><div class="k-sub">${sub||''}</div></div>`;}
 function render(){
   const car=fCar(),liq=fLiq();
@@ -282,7 +282,7 @@ function render(){
     kpiCard('€','#dcfce7','#22B357','Importo liquidato',fmtEk(impL),'')+
     kpiCard('⏱','#fef3c7','#D99A07','Giorni medi',gm.toFixed(1),'caric. → liquid.')+
     kpiCard('👤','#f1f5f9','#475569','Operatori attivi',Object.keys(liqOps).length,'');
-  stackTrend('ch-liq-trend',liq,mr);bucketsChart(liq);fillTable('tbl-liq',liqOps,totL,nMon,true);
+  stackTrend('ch-liq-trend',liq,mr);bucketsChart(liq);fillLiqTable(liqOps,totL);
 }
 function legRow(col,label,n,pct){
   return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">'+
