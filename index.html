@@ -360,6 +360,32 @@ function fillCarTable(opsMap,tot){
       '<td class="num">'+fmtN(v.si)+' <span style="color:#7C3AED;font-size:11px">('+pd+'%)</span></td>'+
       '<td class="num">'+fmtN(v.no)+'</td><td class="num">'+fmtE(v.imp)+'</td></tr>';}).join('');
 }
+function liqRankChart(opsMap){
+  const arr=Object.entries(opsMap).sort((a,b)=>b[1].c-a[1].c);
+  destroy('ch-liq-rank');
+  charts['ch-liq-rank']=new Chart(document.getElementById('ch-liq-rank'),{type:'bar',
+    data:{labels:arr.map(x=>x[0]),datasets:[
+      {label:'RI-RE',data:arr.map(x=>x[1].rr||0),backgroundColor:'#2563EB',borderRadius:4,stack:'s',maxBarThickness:34},
+      {label:'ECE',data:arr.map(x=>x[1].ec||0),backgroundColor:'#D99A07',borderRadius:4,stack:'s',maxBarThickness:34},
+      {label:'Nulle',data:arr.map(x=>x[1].nl||0),backgroundColor:'#E5E7EB',borderRadius:4,stack:'s',maxBarThickness:34}
+    ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtN(c.parsed.x)+' pratiche'}}},
+      scales:{x:{stacked:true,beginAtZero:true,grid:{color:'#eef2f7'},ticks:{font:{size:11}}},
+              y:{stacked:true,grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}});
+}
+function fillLiqTable(opsMap,tot){
+  const arr=Object.entries(opsMap).sort((a,b)=>b[1].c-a[1].c);const max=arr.length?arr[0][1].c:1;
+  const tb=document.querySelector('#tbl-liq tbody');
+  if(!arr.length){tb.innerHTML='<tr><td colspan="7" class="nodata">Nessun dato per i filtri selezionati</td></tr>';return;}
+  tb.innerHTML=arr.map(([op,v])=>{const q=tot?v.c/tot*100:0;const gm=v.gn?v.gs/v.gn:0;const cls=gm<=15?'b-green':gm<=30?'b-amber':'b-red';
+    return '<tr><td class="bar-cell"><div class="bar" style="width:'+(v.c/max*100).toFixed(1)+'%"></div><span style="font-weight:600">'+op+'</span></td>'+
+      '<td class="num">'+fmtN(v.c)+'</td><td class="num">'+q.toFixed(1)+'%</td>'+
+      '<td class="num">'+fmtN(v.rr||0)+'</td><td class="num">'+fmtN(v.ec||0)+'</td>'+
+      '<td class="num">'+fmtE(v.imp)+'</td>'+
+      '<td class="num"><span class="badge '+cls+'">'+gm.toFixed(1)+' gg</span></td></tr>';}).join('');
+}
 function lineOpts(){return{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},maxRotation:0,autoSkip:true,maxTicksLimit:14}},y:{beginAtZero:true,grid:{color:'#eef2f7'},ticks:{font:{size:11}}}}};}
 function rankBar(id,opsMap,color){const arr=Object.entries(opsMap).sort((a,b)=>b[1].c-a[1].c);destroy(id);
   charts[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:arr.map(x=>x[0]),datasets:[{data:arr.map(x=>x[1].c),backgroundColor:color,borderRadius:5,maxBarThickness:34}]},
