@@ -311,7 +311,7 @@ function liqTypeChart(rr,ec,nl){
   const tot=rr+ec+nl, pct=n=>tot?Math.round(n/tot*100)+'%':'0%';
   destroy('ch-liqtype');
   charts['ch-liqtype']=new Chart(document.getElementById('ch-liqtype'),{type:'doughnut',
-    data:{labels:['RI-RE','ECE','Nulle'],datasets:[{data:[rr,ec,nl],backgroundColor:['#2563EB','#D99A07','#22B357'],borderWidth:0}]},
+    data:{labels:['RI-RE','ECE','Ordinarie'],datasets:[{data:[rr,ec,nl],backgroundColor:['#2563EB','#D99A07','#22B357'],borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>c.label+': '+fmtN(c.parsed)+' ('+pct(c.parsed)+')'}}}},
     plugins:[{id:'ctr2',afterDraw(ch){const a=ch.chartArea,ctx=ch.ctx;const x=(a.left+a.right)/2,y=(a.top+a.bottom)/2;
@@ -320,7 +320,7 @@ function liqTypeChart(rr,ec,nl){
   document.getElementById('liqtype-legend').innerHTML=
     legRow('#2563EB','RI-RE',rr,pct(rr))+
     legRow('#D99A07','ECE',ec,pct(ec))+
-    legRow('#22B357','Nulle',nl,pct(nl));
+    legRow('#22B357','Ordinarie',nl,pct(nl));
 }
 function carRankChart(opsMap){
   const arr=Object.entries(opsMap).sort((a,b)=>b[1].c-a[1].c);
@@ -367,7 +367,7 @@ function liqRankChart(opsMap){
     data:{labels:arr.map(x=>x[0]),datasets:[
       {label:'RI-RE',data:arr.map(x=>x[1].rr||0),backgroundColor:'#2563EB',borderRadius:4,stack:'s',maxBarThickness:34},
       {label:'ECE',data:arr.map(x=>x[1].ec||0),backgroundColor:'#D99A07',borderRadius:4,stack:'s',maxBarThickness:34},
-      {label:'Nulle',data:arr.map(x=>x[1].nl||0),backgroundColor:'#22B357',borderRadius:4,stack:'s',maxBarThickness:34}
+      {label:'Ordinarie',data:arr.map(x=>x[1].nl||0),backgroundColor:'#22B357',borderRadius:4,stack:'s',maxBarThickness:34}
     ]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},
