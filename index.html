@@ -181,7 +181,7 @@ sb_publishable_KYjkyW94-XaouPohYQGdgQ_ucAyI2I2
       </div>
       <div class="grid-2">
         <div class="panel"><div class="panel-head"><div class="tick"></div><h2>Caricamento per operatore</h2><span class="hint">BO vs dealer</span></div><div class="chart-box"><canvas id="ch-car-rank"></canvas></div></div>
-        <div class="panel"><div class="panel-head"><div class="tick"></div><h2>Liquidazione per operatore</h2></div><div class="chart-box"><canvas id="ch-liq-rank"></canvas></div></div>
+        <div class="panel"><div class="panel-head"><div class="tick"></div><h2>Liquidazione per operatore</h2><span class="hint">RI-RE / ECE / Nulle</span></div><div class="chart-box"><canvas id="ch-liq-rank"></canvas></div></div>
       </div>
     </div>
     <div class="page" id="page-caricamento">
@@ -267,7 +267,7 @@ function render(){
   charts['ch-trend']=new Chart(document.getElementById('ch-trend'),{type:'line',data:{labels:mr.map(MLBL),datasets:[
       {label:'Caricate',data:mr.map(m=>cMap[m]||0),borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:0},
       {label:'Liquidate',data:mr.map(m=>lMap[m]||0),borderColor:'#22B357',backgroundColor:'rgba(34,179,87,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:0}]},options:lineOpts()});
-  carRankChart(carOps);rankBar('ch-liq-rank',liqOps,'#22B357');
+  carRankChart(carOps);liqRankChart(liqOps);
   funnelChart(totC,totL);
   liqTypeChart(liq.reduce((a,r)=>a+(r.rr||0),0),liq.reduce((a,r)=>a+(r.ec||0),0),liq.reduce((a,r)=>a+(r.nl||0),0));
   dealerChart(car.reduce((a,r)=>a+(r.si||0),0),car.reduce((a,r)=>a+(r.no||0),0));
