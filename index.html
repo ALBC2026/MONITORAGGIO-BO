@@ -433,7 +433,16 @@ document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=
 const REST=SUPA_URL.replace(/\/$/,'')+'/rest/v1';
 let HEADERS={apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY};
 const _sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+async function ensureToken(){
+  let {data:{session}}=await _sb.auth.getSession();
+  if(session && session.expires_at && session.expires_at*1000 < Date.now()+60000){
+    const r=await _sb.auth.refreshSession(); if(r.data && r.data.session) session=r.data.session;
+  }
+  if(!session){ showLogin(); throw new Error('Sessione scaduta. Riaccedi e riprova.'); }
+  HEADERS.Authorization='Bearer '+session.access_token;
+}
 async function fetchAll(){
+  await ensureToken();
   let rows=[],offset=0,limit=1000;
   const sel='select=punto_vendita,commerciale,codice,prodotto,data_caricamento,operatore_caricamento,stato,data_liquidazione,operatore_liquidazione,importo_finanziato,liq_ri_re,liq_ece,car_dealer';
   while(true){
@@ -602,6 +611,7 @@ async function doReplace(){
   let log=prev.querySelector('.imp-log'); if(!log){log=document.createElement('div');log.className='imp-log';prev.appendChild(log);}
   const say=m=>{log.innerHTML=m;};
   try{
+    await ensureToken();
     say('Cancellazione dati esistenti...');
     const del=await fetch(REST+'/'+TABLE+'?id=gte.0',{method:'DELETE',headers:Object.assign({},HEADERS,{Prefer:'return=minimal'})});
     if(!del.ok && del.status!==404 && del.status!==406) throw new Error('DELETE HTTP '+del.status+' - '+(await del.text()).slice(0,180));
