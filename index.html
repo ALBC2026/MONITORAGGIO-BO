@@ -1,5 +1,5 @@
-https://tqjxihebahtsgvitylrp.supabase.co/rest/v1/
-sb_publishable_KYjkyW94-XaouPohYQGdgQ_ucAyI2I2
+<!DOCTYPE html>
+<html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,6 +141,7 @@ sb_publishable_KYjkyW94-XaouPohYQGdgQ_ucAyI2I2
     <div class="nav-item active" data-page="panoramica"><div class="dot"></div><div class="txt">Overview</div></div>
     <div class="nav-item" data-page="caricamento"><div class="dot"></div><div class="txt">Overview Caricamento</div></div>
     <div class="nav-item" data-page="liquidazione"><div class="dot"></div><div class="txt">Overview Liquidazione</div></div>
+    <div class="nav-item" data-page="operatore"><div class="dot"></div><div class="txt">Overview Operatore</div></div>
     <div class="nav-item" data-page="importa"><div class="dot"></div><div class="txt">Importa dati</div></div>
     <div class="sidebar-bottom"><div class="user-info"><div class="avatar">BO</div>
       <div class="meta"><span class="name" id="user-name">Team Back Office</span><span class="canale" id="upd">agg. --</span></div></div>
@@ -198,6 +199,11 @@ sb_publishable_KYjkyW94-XaouPohYQGdgQ_ucAyI2I2
       </div>
       <div class="panel" style="padding:0;overflow:hidden;"><div class="panel-head" style="padding:18px 22px 0;"><div class="tick"></div><h2>Dettaglio operatori — liquidazione</h2></div>
         <table id="tbl-liq"><thead><tr><th>Operatore</th><th class="num">Liquidate</th><th class="num">Quota</th><th class="num">RI-RE</th><th class="num">ECE</th><th class="num">Importo liquidato</th><th class="num">Giorni medi</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="page" id="page-operatore">
+      <div class="kpi-grid" id="kpi-op"></div>
+      <div class="panel" style="padding:0;overflow:hidden;"><div class="panel-head" style="padding:18px 22px 0;"><div class="tick"></div><h2>Dettaglio per operatore e filiale</h2><span class="hint">% calcolate sul totale dell'operatore</span></div>
+        <table id="tbl-op"><thead><tr><th>Operatore / Filiale</th><th class="num">Caricate</th><th class="num">% car. op.</th><th class="num">Erogate</th><th class="num">% ero. op.</th><th class="num">Totale</th><th class="num">% tot. op.</th></tr></thead><tbody></tbody></table></div>
     </div>
     <div class="page" id="page-importa">
       <div class="panel">
@@ -283,6 +289,7 @@ function render(){
     kpiCard('⏱','#fef3c7','#D99A07','Giorni medi',gm.toFixed(1),'caric. → liquid.')+
     kpiCard('👤','#f1f5f9','#475569','Operatori attivi',Object.keys(liqOps).length,'');
   stackTrend('ch-liq-trend',liq,mr);bucketsChart(liq);fillLiqTable(liqOps,totL);
+  renderOperatore();
 }
 function legRow(col,label,n,pct){
   return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">'+
@@ -353,7 +360,7 @@ function dealerChart(si,no){
 function fillCarTable(opsMap,tot){
   const arr=Object.entries(opsMap).sort((a,b)=>b[1].c-a[1].c);const max=arr.length?arr[0][1].c:1;
   const tb=document.querySelector('#tbl-car tbody');
-  if(!arr.length){tb.innerHTML='<tr><td colspan="6" class="nodata">Nessun dato per i filtri selezionati</td></tr>';return;}
+  if(!arr.length){tb.innerHTML='<tr><td colspan="7" class="nodata">Nessun dato per i filtri selezionati</td></tr>';return;}
   tb.innerHTML=arr.map(([op,v])=>{const q=tot?v.c/tot*100:0;const pd=v.c?Math.round(v.si/v.c*100):0;
     return '<tr><td class="bar-cell"><div class="bar" style="width:'+(v.c/max*100).toFixed(1)+'%"></div><span style="font-weight:600">'+op+'</span></td>'+
       '<td class="num">'+fmtN(v.c)+'</td><td class="num">'+q.toFixed(1)+'%</td>'+
@@ -386,6 +393,57 @@ function fillLiqTable(opsMap,tot){
       '<td class="num">'+fmtE(v.imp)+'</td>'+
       '<td class="num"><span class="badge '+cls+'">'+gm.toFixed(1)+' gg</span></td></tr>';}).join('');
 }
+function renderOperatore(){
+  const car=fCar(),liq=fLiq();
+  const totC=car.reduce((a,r)=>a+r.c,0),totL=liq.reduce((a,r)=>a+r.c,0);
+  const m={};
+  const ens=op=>m[op]||(m[op]={c:0,l:0,pv:{}});
+  const ensPv=(o,pv)=>o.pv[pv]||(o.pv[pv]={c:0,l:0});
+  car.forEach(r=>{const o=ens(r.op);o.c+=r.c;ensPv(o,r.pv).c+=r.c;});
+  liq.forEach(r=>{const o=ens(r.op);o.l+=r.c;ensPv(o,r.pv).l+=r.c;});
+  document.getElementById('kpi-op').innerHTML=
+    kpiCard('▦','#dbeafe','#2563EB','Totale caricate',fmtN(totC),'')+
+    kpiCard('✓','#dcfce7','#22B357','Totale liquidate',fmtN(totL),'')+
+    kpiCard('👤','#f1f5f9','#475569','Operatori',fmtN(Object.keys(m).length),'caricamento + liquidazione');
+  fillOpTable(m,totC,totL);
+}
+function opRankChart(m){
+  const arr=Object.entries(m).sort((a,b)=>(b[1].c+b[1].l)-(a[1].c+a[1].l));
+  destroy('ch-op-rank');
+  charts['ch-op-rank']=new Chart(document.getElementById('ch-op-rank'),{type:'bar',
+    data:{labels:arr.map(x=>x[0]),datasets:[
+      {label:'Caricate',data:arr.map(x=>x[1].c),backgroundColor:'#2563EB',borderRadius:4,maxBarThickness:30},
+      {label:'Liquidate',data:arr.map(x=>x[1].l),backgroundColor:'#22B357',borderRadius:4,maxBarThickness:30}
+    ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtN(c.parsed.x)+' pratiche'}}},
+      scales:{x:{beginAtZero:true,grid:{color:'#eef2f7'},ticks:{font:{size:11}}},
+              y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}});
+}
+function fillOpTable(m,totC,totL){
+  const arr=Object.entries(m).sort((a,b)=>(b[1].c+b[1].l)-(a[1].c+a[1].l));
+  const tb=document.querySelector('#tbl-op tbody');
+  if(!arr.length){tb.innerHTML='<tr><td colspan="7" class="nodata">Nessun dato per i filtri selezionati</td></tr>';return;}
+  const pct=(n,d)=>d?(n/d*100).toFixed(1)+'%':'–';
+  let h='';
+  arr.forEach(([op,v])=>{
+    h+='<tr style="background:#f8fafc;"><td style="font-weight:700;">'+op+'</td>'+
+       '<td class="num" style="font-weight:700;">'+fmtN(v.c)+'</td><td class="num" style="font-weight:700;color:#2563EB;">'+pct(v.c,v.c)+'</td>'+
+       '<td class="num" style="font-weight:700;">'+fmtN(v.l)+'</td><td class="num" style="font-weight:700;color:#22B357;">'+pct(v.l,v.l)+'</td>'+
+       '<td class="num" style="font-weight:700;">'+fmtN(v.c+v.l)+'</td>'+
+       '<td class="num" style="font-weight:700;color:#475569;">'+pct(v.c+v.l,v.c+v.l)+'</td></tr>';
+    const pvs=Object.entries(v.pv).sort((a,b)=>(b[1].c+b[1].l)-(a[1].c+a[1].l));
+    pvs.forEach(([pv,x])=>{
+      h+='<tr><td style="padding-left:30px;color:#475569;">'+String(pv).replace('F.S. ','')+'</td>'+
+         '<td class="num">'+fmtN(x.c)+'</td><td class="num" style="color:#94a3b8;">'+pct(x.c,v.c)+'</td>'+
+         '<td class="num">'+fmtN(x.l)+'</td><td class="num" style="color:#94a3b8;">'+pct(x.l,v.l)+'</td>'+
+         '<td class="num" style="font-weight:600;">'+fmtN(x.c+x.l)+'</td>'+
+         '<td class="num" style="color:#94a3b8;">'+pct(x.c+x.l,v.c+v.l)+'</td></tr>';
+    });
+  });
+  tb.innerHTML=h;
+}
 function lineOpts(){return{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},maxRotation:0,autoSkip:true,maxTicksLimit:14}},y:{beginAtZero:true,grid:{color:'#eef2f7'},ticks:{font:{size:11}}}}};}
 function rankBar(id,opsMap,color){const arr=Object.entries(opsMap).sort((a,b)=>b[1].c-a[1].c);destroy(id);
   charts[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:arr.map(x=>x[0]),datasets:[{data:arr.map(x=>x[1].c),backgroundColor:color,borderRadius:5,maxBarThickness:34}]},
@@ -414,14 +472,14 @@ function buildMS(){
   });}
 function syncMS(dim){const wrap=document.querySelector(`.ms[data-dim="${dim}"]`),cnt=wrap.querySelector('.cnt'),n=SEL[dim].size,tot=DIMS[dim].opts.length;
   if(n===0||n===tot){cnt.textContent='Tutti';cnt.classList.add('all');}else{cnt.textContent=n;cnt.classList.remove('all');}
-  if(n===tot)SEL[dim].clear();renderPills();}
+  if(n===tot&&tot>1)SEL[dim].clear();renderPills();}
 function renderPills(){const labelFor=(dim,v)=>DIMS[dim].opts.find(o=>o.v===v)?.t||v;const out=[];
   for(const dim of ORD) if(SEL[dim].size) out.push(`<span class="ap">${DIMS[dim].label}: ${[...SEL[dim]].map(v=>labelFor(dim,v)).join(', ')}</span>`);
   document.getElementById('active-pills').innerHTML=out.join('');}
 function resetAll(){for(const d in SEL)SEL[d].clear();document.querySelectorAll('.ms input').forEach(cb=>cb.checked=false);ORD.forEach(syncMS);render();}
 document.addEventListener('click',()=>document.querySelectorAll('.ms-panel').forEach(p=>p.classList.remove('open')));
 document.getElementById('btn-reset').addEventListener('click',resetAll);
-const TITLES={panoramica:'Overview',caricamento:'Overview Caricamento',liquidazione:'Overview Liquidazione',importa:'Importa / aggiorna dati'};
+const TITLES={panoramica:'Overview',caricamento:'Overview Caricamento',liquidazione:'Overview Liquidazione',operatore:'Overview Operatore',importa:'Importa / aggiorna dati'};
 function switchPage(p){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active',x.dataset.page===p));
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
